@@ -21,22 +21,21 @@ endmodule
 
 
 module CSA_Layer #(
-    parameter NUM = 7,
-    parameter WIDTH = 7,
-    parameter CSAed_NUM = $floor(NUM * 2 / 3),
-    parameter Non_CSAed_NUM = NUM - 3 * $floor(NUM / 3)
+    parameter IN_NUM = 7,
+    parameter OUT_NUM = 5,
+    parameter WIDTH = 7
 )(
-    input logic [WIDTH-1:0] IN [NUM-1:0],
+    input logic [WIDTH-1:0] IN [IN_NUM-1:0],
 
-    output logic [WIDTH-1:0] OUT [CSAed_NUM + Non_CSAed_NUM-1:0]
+    output logic [WIDTH-1:0] OUT [OUT_NUM-1:0]
 );
 
 genvar i;
 generate
-    for(i=0;i<NUM;i=i+3) begin
-        if(i+2>=NUM) begin
+    for(i=0;i<IN_NUM;i=i+3) begin
+        if(i+2>=IN_NUM) begin
             assign OUT[i*2/3] = IN[i];
-            if(i+1 < NUM) begin
+            if(i+1 < IN_NUM) begin
                 assign OUT[i*2/3+1] = IN[i+1];
             end
         end else begin
@@ -58,26 +57,26 @@ endmodule
 module Radix16_Booth #(
     parameter WIDTH = 24
 )(
-    input logic [WIDTH-1:0] Multiplicand,
-    input logic [4:0] Multiplier,
+    input wire [WIDTH-1:0] Multiplicand,
+    input wire [4:0] Multiplier,
 
-    output logic [WIDTH+3:0] PartialProduct
+    output wire [WIDTH+3:0] PartialProduct
 );
 
-logic [WIDTH+3:0] X7_sum;
-logic [WIDTH+3:0] X7_carry;
+wire [WIDTH+2:0] X7_sum;
+wire [WIDTH+2:0] X7_carry;
 
-logic [WIDTH+3:0] X1 = Multiplicand;
-logic [WIDTH+3:0] X2 = Multiplicand << 1;
-logic [WIDTH+3:0] X3 = X1 + X2;
-logic [WIDTH+3:0] X4 = Multiplicand << 2;
-logic [WIDTH+3:0] X5 = X1 + X4;
-logic [WIDTH+3:0] X6 = X3 << 1;
-logic [WIDTH+3:0] X7= X7_sum + X7_carry;
-logic [WIDTH+3:0] X8 = Multiplicand << 3;
+wire [WIDTH+2:0] X1 = Multiplicand;
+wire [WIDTH+2:0] X2 = Multiplicand << 1;
+wire [WIDTH+2:0] X3 = X1 + X2;
+wire [WIDTH+2:0] X4 = Multiplicand << 2;
+wire [WIDTH+2:0] X5 = X1 + X4;
+wire [WIDTH+2:0] X6 = X3 << 1;
+wire [WIDTH+2:0] X7= X7_sum + X7_carry;
+wire [WIDTH+2:0] X8 = Multiplicand << 3;
 
 
-CSA #(WIDTH+4) X7_csa(
+CSA #(WIDTH+3) X7_csa(
     .A(X1),
     .B(X2),
     .C(X4),
@@ -141,19 +140,19 @@ always_comb begin
     endcase
 end
 
-logic [WIDTH+3:0] L1_0 = L1_sel[0] ? X1 : 'b0;
-logic [WIDTH+3:0] L1_1 = L1_sel[1] ? X3 :  X2;
-logic [WIDTH+3:0] L1_2 = L1_sel[2] ? X5 :  X4;
-logic [WIDTH+3:0] L1_3 = L1_sel[3] ? X8 :  X6;
+wire [WIDTH+2:0] L1_0 = L1_sel[0] ? X1 : 'b0;
+wire [WIDTH+2:0] L1_1 = L1_sel[1] ? X3 :  X2;
+wire [WIDTH+2:0] L1_2 = L1_sel[2] ? X5 :  X4;
+wire [WIDTH+2:0] L1_3 = L1_sel[3] ? X8 :  X6;
 
-logic [WIDTH+3:0] L2_0 = L2_sel[0] ? L1_1 : L1_0;
-logic [WIDTH+3:0] L2_1 = L2_sel[1] ? L1_3 : L1_2;
+wire [WIDTH+2:0] L2_0 = L2_sel[0] ? L1_1 : L1_0;
+wire [WIDTH+2:0] L2_1 = L2_sel[1] ? L1_3 : L1_2;
 
-logic [WIDTH+3:0] L3_0 = L3_sel    ? L2_1 : L2_0;
+wire [WIDTH+2:0] L3_0 = L3_sel    ? L2_1 : L2_0;
 
-logic Mux_Res = ((Multiplier == 5'b00110) || (Multiplier == 5'b00101) || (Multiplier == 5'b11001) || (Multiplier == 5'b11010)) ? X7 : L3_0;
+wire [WIDTH+2:0] Mux_Res = ((Multiplier == 5'b00110) || (Multiplier == 5'b00101) || (Multiplier == 5'b11001) || (Multiplier == 5'b11010)) ? X7 : L3_0;
 
-assign PartialProduct = (Multiplier[4] ^ Mux_Res) + Multiplier[4];
+assign PartialProduct = ({(WIDTH+4){Multiplier[4]}} ^ {1'b0, Mux_Res}) + Multiplier[4];
 
 endmodule
 

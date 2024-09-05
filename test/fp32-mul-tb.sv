@@ -35,10 +35,19 @@ module fp32_multiplier_tb;
     $display("Starting FP32 multiplier testbench...");
 
     // 正常浮点数测�?
-    a = 32'h3F800000; // 1.0
-    b = 32'h40000000; // 2.0
+    a = 32'hBF91EB85; // -1.14
+    b = 32'h75CABCBD; // 5.14e32
     #CLK_PERIOD;
-    if (product !== 32'h40000000) begin // 2.0
+    if (product !== 32'hF5E71ED7) begin // -5.8596e32
+      $display("FAILED: 1.0 * 2.0 != 2.0");
+    end else begin
+      $display("PASSED: 1.0 * 2.0 == 2.0");
+    end
+    
+    a = 32'h3FC00000; // 1.5
+    b = 32'h3FC00000; // 1.5
+    #CLK_PERIOD;
+    if (product !== 32'h40100000) begin // 2.0
       $display("FAILED: 1.0 * 2.0 != 2.0");
     end else begin
       $display("PASSED: 1.0 * 2.0 == 2.0");

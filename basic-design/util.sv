@@ -127,7 +127,7 @@ always_comb begin
             L2_sel = 2'b10;
             L3_sel = 1'b1;
         end
-        5'b00110, 5'b00101, 5'b11001, 5'b11010: begin // 7 not used here, just for default
+        5'b01110, 5'b01101, 5'b10001, 5'b10010: begin // 7 not used here, just for default
             L1_sel = 4'b0000;
             L2_sel = 2'b00;
             L3_sel = 1'b0;
@@ -150,7 +150,7 @@ wire [WIDTH+2:0] L2_1 = L2_sel[1] ? L1_3 : L1_2;
 
 wire [WIDTH+2:0] L3_0 = L3_sel    ? L2_1 : L2_0;
 
-wire [WIDTH+2:0] Mux_Res = ((Multiplier == 5'b00110) || (Multiplier == 5'b00101) || (Multiplier == 5'b11001) || (Multiplier == 5'b11010)) ? X7 : L3_0;
+wire [WIDTH+2:0] Mux_Res = ((Multiplier == 5'b01101) || (Multiplier == 5'b01101) || (Multiplier == 5'b10001) || (Multiplier == 5'b10010)) ? X7 : L3_0;
 
 assign PartialProduct = ({(WIDTH+4){Multiplier[4]}} ^ {1'b0, Mux_Res}) + Multiplier[4];
 

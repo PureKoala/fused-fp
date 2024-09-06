@@ -53,14 +53,12 @@ generate
 endgenerate
 endmodule
 
-
-module Radix16_Booth #(
+module Radix16_Booth_Encoder #(
     parameter WIDTH = 24
 )(
-    input wire [WIDTH-1:0] Multiplicand,
-    input wire [4:0] Multiplier,
+    input logic [WIDTH-1:0] Multiplicand,
 
-    output wire [WIDTH+3:0] PartialProduct
+    output logic [WIDTH+2:0] Multiplicand_Encoded [8:0]
 );
 
 wire [WIDTH+2:0] X7_sum;
@@ -75,7 +73,6 @@ wire [WIDTH+2:0] X6 = X3 << 1;
 wire [WIDTH+2:0] X7= X7_sum + X7_carry;
 wire [WIDTH+2:0] X8 = Multiplicand << 3;
 
-
 CSA #(WIDTH+3) X7_csa(
     .A(X1),
     .B(X2),
@@ -84,6 +81,26 @@ CSA #(WIDTH+3) X7_csa(
 
     .SUM(X7_sum),
     .CARRY(X7_carry)
+);
+
+assign Multiplicand_Encoded[0] = 'd0;
+assign Multiplicand_Encoded[1] = X1;
+assign Multiplicand_Encoded[2] = X2;
+assign Multiplicand_Encoded[3] = X3;
+assign Multiplicand_Encoded[4] = X4;
+assign Multiplicand_Encoded[5] = X5;
+assign Multiplicand_Encoded[6] = X6;
+assign Multiplicand_Encoded[7] = X7;
+assign Multiplicand_Encoded[8] = X8;
+endmodule
+
+module Radix16_Booth_Sel #(
+    parameter WIDTH = 24
+)(
+    input wire [WIDTH+2:0] Multiplicand_encoded [8:0],
+    input wire [4:0] Multiplier,
+
+    output wire [WIDTH+3:0] PartialProduct
 );
 
 logic [3:0] L1_sel;
@@ -140,17 +157,103 @@ always_comb begin
     endcase
 end
 
-wire [WIDTH+2:0] L1_0 = L1_sel[0] ? X1 : 'b0;
-wire [WIDTH+2:0] L1_1 = L1_sel[1] ? X3 :  X2;
-wire [WIDTH+2:0] L1_2 = L1_sel[2] ? X5 :  X4;
-wire [WIDTH+2:0] L1_3 = L1_sel[3] ? X8 :  X6;
+wire [WIDTH+2:0] L1_0 = Multiplicand_encoded[L1_sel[0] ? 1 : 0];
+wire [WIDTH+2:0] L1_1 = Multiplicand_encoded[L1_sel[1] ? 3 : 2];
+wire [WIDTH+2:0] L1_2 = Multiplicand_encoded[L1_sel[2] ? 5 : 4];
+wire [WIDTH+2:0] L1_3 = Multiplicand_encoded[L1_sel[3] ? 8 : 6];
 
 wire [WIDTH+2:0] L2_0 = L2_sel[0] ? L1_1 : L1_0;
 wire [WIDTH+2:0] L2_1 = L2_sel[1] ? L1_3 : L1_2;
 
 wire [WIDTH+2:0] L3_0 = L3_sel    ? L2_1 : L2_0;
 
-wire [WIDTH+2:0] Mux_Res = ((Multiplier == 5'b01101) || (Multiplier == 5'b01101) || (Multiplier == 5'b10001) || (Multiplier == 5'b10010)) ? X7 : L3_0;
+wire [WIDTH+2:0] Mux_Res = ((Multiplier == 5'b01101) || (Multiplier == 5'b01101) || (Multiplier == 5'b10001) || (Multiplier == 5'b10010)) ? Multiplicand_encoded[7] : L3_0;
+
+assign PartialProduct = ({(WIDTH+4){Multiplier[4]}} ^ {1'b0, Mux_Res}) + Multiplier[4];
+
+endmodule
+
+
+module Radix16_Booth #(
+    parameter WIDTH = 24
+)(
+    input wire [WIDTH-1:0] Multiplicand,
+    input wire [4:0] Multiplier,
+
+    output wire [WIDTH+3:0] PartialProduct
+);
+
+wire [WIDTH+2:0] Multiplicand_encoded [8:0];
+Radix16_Booth_Encoder #(WIDTH) booth_encoder(
+    .Multiplicand(Multiplicand),
+    .Multiplicand_Encoded(Multiplicand_encoded)
+);
+
+logic [3:0] L1_sel;
+logic [1:0] L2_sel;
+logic       L3_sel;
+
+always_comb begin
+    case(Multiplier[4:0])
+        5'b00000, 5'b11111: begin // 0
+            L1_sel = 4'b0000;
+            L2_sel = 2'b00;
+            L3_sel = 1'b0;
+        end
+        5'b00001, 5'b00010, 5'b11110, 5'b11101: begin  // 1
+            L1_sel = 4'b0001;
+            L2_sel = 2'b00;
+            L3_sel = 1'b0;
+        end
+        5'b00011, 5'b00100, 5'b11100, 5'b11011: begin // 2
+            L1_sel = 4'b0000;
+            L2_sel = 2'b01;
+            L3_sel = 1'b0;
+        end
+        5'b00110, 5'b00101, 5'b11001, 5'b11010: begin // 3
+            L1_sel = 4'b0010;
+            L2_sel = 2'b01;
+            L3_sel = 1'b0;
+        end
+        5'b00111, 5'b01000, 5'b11000, 5'b10111: begin // 4
+            L1_sel = 4'b0000;
+            L2_sel = 2'b00;
+            L3_sel = 1'b1;
+        end
+        5'b01001, 5'b01010, 5'b10110, 5'b10101: begin // 5
+            L1_sel = 4'b0100;
+            L2_sel = 2'b00;
+            L3_sel = 1'b1;
+        end
+        5'b01011, 5'b01100, 5'b10011, 5'b10100: begin // 6
+            L1_sel = 4'b0000;
+            L2_sel = 2'b10;
+            L3_sel = 1'b1;
+        end
+        5'b01110, 5'b01101, 5'b10001, 5'b10010: begin // 7 not used here, just for default
+            L1_sel = 4'b0000;
+            L2_sel = 2'b00;
+            L3_sel = 1'b0;
+        end
+        5'b10000, 5'b01111: begin // 8
+            L1_sel = 4'b1000;
+            L2_sel = 2'b10;
+            L3_sel = 1'b1;
+        end
+    endcase
+end
+
+wire [WIDTH+2:0] L1_0 = Multiplicand_encoded[L1_sel[0] ? 1 : 0]; // L1_sel[0] ? Multiplicand_encoded[1] : 'b0;
+wire [WIDTH+2:0] L1_1 = Multiplicand_encoded[L1_sel[1] ? 3 : 2];
+wire [WIDTH+2:0] L1_2 = Multiplicand_encoded[L1_sel[2] ? 5 : 4];
+wire [WIDTH+2:0] L1_3 = Multiplicand_encoded[L1_sel[3] ? 8 : 6];
+
+wire [WIDTH+2:0] L2_0 = L2_sel[0] ? L1_1 : L1_0;
+wire [WIDTH+2:0] L2_1 = L2_sel[1] ? L1_3 : L1_2;
+
+wire [WIDTH+2:0] L3_0 = L3_sel    ? L2_1 : L2_0;
+
+wire [WIDTH+2:0] Mux_Res = ((Multiplier == 5'b01101) || (Multiplier == 5'b01101) || (Multiplier == 5'b10001) || (Multiplier == 5'b10010)) ? Multiplicand_encoded[7] : L3_0;
 
 assign PartialProduct = ({(WIDTH+4){Multiplier[4]}} ^ {1'b0, Mux_Res}) + Multiplier[4];
 

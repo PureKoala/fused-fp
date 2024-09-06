@@ -1,4 +1,4 @@
-// `include "util.sv"
+`include "util.sv"
 
 module fp_mul #(
     parameter FP_WIDTH  = 32,

@@ -210,6 +210,20 @@ always_comb begin
     endcase
 end
 
+logic [3:0] NormBit;
+always_comb begin
+    case(CONFIG_FP)
+        `CONFIG_FP32:       NormBit = NormBit_FP32;
+        `CONFIG_FP16:       NormBit = NormBit_FP16;
+        `CONFIG_TF32:       NormBit = NormBit_FP16;
+        `CONFIG_BF16:       NormBit = NormBit_BF16;
+        `CONFIG_FP8_E4M3:   NormBit = NormBit_FP8_E4M3;
+        `CONFIG_FP8_E5M2:   NormBit = NormBit_FP8_E5M2;
+        default:            NormBit = 'd0;
+    endcase
+end
+
 assign OUT = Configed_OUT;
+assign OUT_NormBits = NormBit;
     
 endmodule

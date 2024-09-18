@@ -31,9 +31,9 @@ wire [23:0] MAN1_FP8_E4M3 = {   2'b0, 1'b1, IN1[26:24], 2'b0, 1'b1, IN1[18:16],
 wire [23:0] MAN2_FP8_E4M3 = {   2'b0, 1'b1, IN2[26:24], 2'b0, 1'b1, IN2[18:16],
                                 2'b0, 1'b1, IN2[10:8],  2'b0, 1'b1, IN2[2:0]  };
 
-wire [23:0] MAN1_FP8_E5M2 = {   3'b0, 1'b1, IN1[15:24], 3'b0, 1'b1, IN1[17:16],
+wire [23:0] MAN1_FP8_E5M2 = {   3'b0, 1'b1, IN1[15:14], 3'b0, 1'b1, IN1[17:16],
                                 3'b0, 1'b1, IN1[9:8],   3'b0, 1'b1, IN1[1:0]  };
-wire [23:0] MAN2_FP8_E5M2 = {   3'b0, 1'b1, IN2[15:24], 3'b0, 1'b1, IN2[17:16],
+wire [23:0] MAN2_FP8_E5M2 = {   3'b0, 1'b1, IN2[15:14], 3'b0, 1'b1, IN2[17:16],
                                 3'b0, 1'b1, IN2[9:8],   3'b0, 1'b1, IN2[1:0]  };
 
 logic [23:0] MAN1_Eff, MAN2_Eff;
@@ -45,7 +45,7 @@ always_comb begin
         end
         `CONFIG_FP16: begin
             MAN1_Eff = MAN1_FP16;
-            MAN2_Eff = MAN2_FP162;
+            MAN2_Eff = MAN2_FP16;
         end
         `CONFIG_TF32: begin
             MAN1_Eff = MAN1_TF32;

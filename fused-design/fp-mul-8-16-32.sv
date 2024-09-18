@@ -12,6 +12,7 @@ module fp_mul_8_16_32 #(
     input wire [WIDTH-1:0] IN2,
     input wire [`CONFIG_WIDTH-1:0] CONFIG_FP,
 
+    output wire [3:0] OUT_NormBits,
     output wire [WIDTH-1:0] OUT
 );
     
@@ -163,20 +164,38 @@ assign Res_24x24 = {z2_24x24, z0_24x24}
 // decide output result accourding to the config bits
 
 /// result without type upgrade
-wire [23:0] Res_FP32        = Res_24x24[47-:24];
-wire [23:0] Res_FP16        = {Res_12x12[1][21-:11], 1'b0, Res_12x12[0][21-:11], 1'b0};
-wire [23:0] Res_TF32        = Res_FP16;
-wire [23:0] Res_BF16        = {Res_12x12[1][15-:8], 4'b0, Res_12x12[0][15-:8], 4'b0};
-wire [23:0] Res_FP8_E4M3    = {Res_6x6[3][7-:4], 8'b0, Res_6x6[2][7-:4], 8'b0, Res_6x6[1][7-:4], 8'b0, Res_6x6[0][7-:4], 8'b0};
-wire [23:0] Res_FP8_E5M2    = {Res_6x6[3][5-:3], 9'b0, Res_6x6[2][5-:3], 9'b0, Res_6x6[1][5-:3], 9'b0, Res_6x6[0][5-:3], 9'b0};
+wire [3:0] NormBit_FP32     = {3'b0, Res_24x24[47]};
+wire [3:0] NormBit_FP16     = {2'b0, Res_12x12[1][21], Res_12x12[0][21]};
+// wire [3:0] NormBit_TF32     = NormBit_FP16;
+wire [3:0] NormBit_BF16     = {2'b0, Res_12x12[1][15], Res_12x12[0][15]};
+wire [3:0] NormBit_FP8_E4M3 = {Res_6x6[3][7], Res_6x6[2][7], Res_6x6[1][7], Res_6x6[0][7]};
+wire [3:0] NormBit_FP8_E5M2 = {Res_6x6[3][5], Res_6x6[2][5], Res_6x6[1][5], Res_6x6[0][5]};
 
-// /// result with type upgrade
-// wire [23:0] Res_FP32_U        = Res_24x24;
-// wire [23:0] Res_FP16_U        = {Res_12x12[1][21-:11], 1'b0, Res_12x12[0][21-:11], 1'b0};
-// wire [23:0] Res_TF32_U        = Res_FP16;
-// wire [23:0] Res_BF16_U        = {Res_12x12[1][15-:8], 4'b0, Res_12x12[0][15-:8], 4'b0};
-// wire [23:0] Res_FP8_E4M3_U    = {Res_12x12[1][7-:4], 8'b0, Res_12x12[0][7-:4], 8'b0};
-// wire [23:0] Res_FP8_E5M2_U    = {Res_12x12[1][5-:3], 9'b0, Res_12x12[0][5-:3], 9'b0};
+wire [23:0] Res_FP32        = NormBit_FP32[0] ? Res_24x24[47-:24] : Res_24x24[46-:24];
+wire [23:0] Res_FP16        = { (NormBit_FP16[1] ? Res_12x12[1][21-:11] : Res_12x12[1][20-:11]), 
+                                1'b0, 
+                                (NormBit_FP16[0] ? Res_12x12[0][21-:11] : Res_12x12[0][20-:11]),
+                                1'b0};
+wire [23:0] Res_TF32        = Res_FP16;
+wire [23:0] Res_BF16        = { 12'b0,
+                                (NormBit_BF16[0] ? Res_12x12[0][15-:8] : Res_12x12[0][14-:8]),
+                                4'b0};
+wire [23:0] Res_FP8_E4M3    = { (NormBit_FP8_E4M3[3] ? Res_6x6[3][7-:4] : Res_6x6[3][6-:4]),
+                                8'b0,
+                                (NormBit_FP8_E4M3[2] ? Res_6x6[2][7-:4] : Res_6x6[2][6-:4]),
+                                8'b0,
+                                (NormBit_FP8_E4M3[1] ? Res_6x6[1][7-:4] : Res_6x6[1][6-:4]),
+                                8'b0,
+                                (NormBit_FP8_E4M3[0] ? Res_6x6[0][7-:4] : Res_6x6[0][6-:4]),
+                                8'b0};
+wire [23:0] Res_FP8_E5M2    = { (NormBit_FP8_E5M2[3] ? Res_6x6[3][5-:3] : Res_6x6[3][4-:3]),
+                                9'b0,
+                                (NormBit_FP8_E5M2[2] ? Res_6x6[2][5-:3] : Res_6x6[2][4-:3]),
+                                9'b0,
+                                (NormBit_FP8_E5M2[1] ? Res_6x6[1][5-:3] : Res_6x6[1][4-:3]),
+                                9'b0,
+                                (NormBit_FP8_E5M2[0] ? Res_6x6[0][5-:3] : Res_6x6[0][4-:3]),
+                                9'b0};
 
 logic [23:0] Configed_OUT;
 always_comb begin

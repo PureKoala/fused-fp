@@ -270,14 +270,14 @@ module Shifter #(
     output logic [WIDTH+2:0] OUT
 );
 
-logic [WIDTH+1:0] IN_GR = {IN, 2'b0};
-logic BigDiff = DIFF >= WIDTH;
+wire [WIDTH+1:0] IN_GR = {IN, 2'b0};
+wire BigDiff = DIFF >= WIDTH;
 
 // level 1
-logic [WIDTH+1:0] L1S0 = IN_GR;
-logic [WIDTH+1:0] L1S1 = {1'b0, IN_GR[WIDTH-1:1]};
-logic [WIDTH+1:0] L1S2 = {2'b0, IN_GR[WIDTH-1:2]};
-logic [WIDTH+1:0] L1S3 = {3'b0, IN_GR[WIDTH-1:3]};
+wire [WIDTH+1:0] L1S0 = IN_GR;
+wire [WIDTH+1:0] L1S1 = {1'b0, IN_GR[WIDTH+1:1]};
+wire [WIDTH+1:0] L1S2 = {2'b0, IN_GR[WIDTH+1:2]};
+wire [WIDTH+1:0] L1S3 = {3'b0, IN_GR[WIDTH+1:3]};
 
 logic [WIDTH+1:0] Lv1_Res;
 logic Sticky_Lv1;
@@ -308,10 +308,10 @@ always_comb begin
 end
 
 // level 2
-logic [WIDTH+1:0] L2S0 = Lv1_Res;
-logic [WIDTH+1:0] L2S4 = {4'b0, Lv1_Res[WIDTH-1:4]};
-logic [WIDTH+1:0] L2S8 = {8'b0, Lv1_Res[WIDTH-1:8]};
-logic [WIDTH+1:0] L2S12 = {12'b0, Lv1_Res[WIDTH-1:12]};
+wire [WIDTH+1:0] L2S0 = Lv1_Res;
+wire [WIDTH+1:0] L2S4 = {4'b0, Lv1_Res[WIDTH+1:4]};
+wire [WIDTH+1:0] L2S8 = {8'b0, Lv1_Res[WIDTH+1:8]};
+wire [WIDTH+1:0] L2S12 = {12'b0, Lv1_Res[WIDTH+1:12]};
 
 logic [WIDTH+1:0] Lv2_Res;
 logic Sticky_Lv2;
@@ -338,11 +338,11 @@ always_comb begin
 end
 
 // level 2
-logic [WIDTH+1:0] L3S0 = Lv2_Res;
-logic [WIDTH+1:0] L3S16 = {16'b0, Lv2_Res[WIDTH-1:16]};
+wire [WIDTH+1:0] L3S0 = Lv2_Res;
+wire [WIDTH+1:0] L3S16 = {16'b0, Lv2_Res[WIDTH+1:16]};
 `ifdef FP64
-logic [WIDTH+1:0] L3S32 = {32'b0, Lv2_Res[WIDTH-1:32]};
-logic [WIDTH+1:0] L3S48 = {48'b0, Lv2_Res[WIDTH-1:48]};
+wire [WIDTH+1:0] L3S32 = {32'b0, Lv2_Res[WIDTH+1:32]};
+wire [WIDTH+1:0] L3S48 = {48'b0, Lv2_Res[WIDTH+1:48]};
 `endif
 
 logic [WIDTH+1:0] Lv3_Res;
@@ -368,11 +368,15 @@ always_comb begin
             Sticky_Lv3 = |Lv2_Res[47:0];
         end
 `endif
+        default: begin
+            Lv3_Res = 'b0;
+            Sticky_Lv3 = 'b0;
+        end
     endcase
 end
 
 // output port
-logic Sticky = BigDiff ? 1'b1 : Sticky_Lv1 | Sticky_Lv2 | Sticky_Lv3;
+wire Sticky = BigDiff ? 1'b1 : Sticky_Lv1 | Sticky_Lv2 | Sticky_Lv3;
 assign OUT = {Lv3_Res, Sticky};
 
 endmodule
@@ -388,9 +392,9 @@ module LZA_fp32 #(
     output logic [3:0] Shift_Num [2:0]
 );
 
-logic [WIDTH-1:0] f1 = IN1 ^ IN2;
-logic [WIDTH-1:0] f2 = IN1 || (!IN2);
-logic [WIDTH-1:0] f  = f1 & {f2[WIDTH-2:0], 1'b1};
+wire [WIDTH-1:0] f1 = IN1 ^ IN2;
+wire [WIDTH-1:0] f2 = IN1 | ~IN2;
+wire [WIDTH-1:0] f  = f1 & {f2[WIDTH-2:0], 1'b1};
 
 // LV1: shift 16 / 0
 logic [15:0] f_lv2;

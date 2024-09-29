@@ -28,7 +28,7 @@ wire [EXP_WIDTH:0] IN_EXP_SUB_21 = ~IN_EXP_SUB_pre;
 
 // wire [MAN_WIDTH+1:0] MAN_DIFF   = {1'b0, IN1_MAN} + ~{1'b0, IN2_MAN} + 'b1;
 wire [EXP_WIDTH-1:0] EXP_DIFF   = IN_EXP_CMP ? IN_EXP_SUB_12[EXP_WIDTH-1:0] : IN_EXP_SUB_21[EXP_WIDTH-1:0];
-wire                IN1_Larger  = IN_EXP_CMP;
+wire                IN1_Larger  = (IN1_EXP > IN2_EXP) || (IN1_EXP == IN2_EXP && IN1_MAN >= IN2_MAN) ;
 wire                Larger_SIG  = IN1_Larger ? IN1_SIG : IN2_SIG;
 wire [EXP_WIDTH-1:0] Larger_EXP = IN1_Larger ? IN1_EXP : IN2_EXP;
 wire [MAN_WIDTH:0]  Larger_MAN  = IN1_Larger ? IN1_MAN : IN2_MAN;

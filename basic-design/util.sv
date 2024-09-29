@@ -383,6 +383,39 @@ endmodule
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 module LZA_fp32 #(
     parameter WIDTH = 24
 )(

@@ -1,4 +1,7 @@
 {
     "Codegeex.CompletionDelay": 0.5,
-    "Codegeex.GenerationPreference": "line by line"
+    "Codegeex.GenerationPreference": "line by line",
+    "files.watcherExclude": {
+        "**/target": true
+    }
 }

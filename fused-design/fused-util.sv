@@ -54,8 +54,8 @@ generate
         assign Lv1_data[lv1_j] = IN[lv1_j*6 +: 6];
         always_comb begin
             case(CONFIG_FP)
-                `CONFIG_FP16: Lv1_shift[lv1_j] = DIFF[lv1_j*10+1:lv1_j*10];
-                `CONFIG_BF16: Lv1_shift[lv1_j] = DIFF[lv1_j*10+1:lv1_j*10];
+                `CONFIG_FP16: Lv1_shift[lv1_j] = lv1_j < 2 ? DIFF[1:0] : DIFF[11:10];
+                `CONFIG_BF16: Lv1_shift[lv1_j] = lv1_j < 2 ? DIFF[1:0] : DIFF[11:10];
                 `CONFIG_FP8_E4M3: Lv1_shift[lv1_j] = DIFF[lv1_j*5+1:lv1_j*5];
                 `CONFIG_FP8_E5M2: Lv1_shift[lv1_j] = DIFF[lv1_j*5+1:lv1_j*5];
                 default: Lv1_shift[lv1_j] = DIFF[1:0];
@@ -91,16 +91,16 @@ assign Lv2_data[1] = {Lv1_Res[3], Lv1_Res[2]};
 
 logic [1:0] Lv2_shift [1:0];
 assign Lv2_shift[0] = DIFF[3:2];
-assign Lv2_shift[1] = CONFIG_FP == `CONFIG_FP16 || CONFIG_FP == `CONFIG_BF16 ? DIFF[11:10] : DIFF[3:2];
+assign Lv2_shift[1] = CONFIG_FP == `CONFIG_FP16 || CONFIG_FP == `CONFIG_BF16 ? DIFF[13:12] : DIFF[3:2];
 
 logic [11:0] Lv2_Res [1:0];
-logic [2:0] Lv2_GRS [1:0];
+logic [2:0]  Lv2_GRS [1:0];
 
 genvar lv2_i;
 generate
     for(lv2_i = 0; lv2_i < 2; lv2_i = lv2_i + 1) begin
         always_comb begin
-            case (Lv1_shift[lv2_i])
+            case (Lv2_shift[lv2_i])
                 2'b00: begin
                     Lv2_Res[lv2_i] = Lv2_data[lv2_i];
                     Lv2_GRS[lv2_i] = Lv1_GRS[lv2_i*2];
@@ -173,10 +173,10 @@ always_comb begin
                     (BigDiff_FP8_E4M3[2] ? 6'b0 : Lv1_Res[2]),
                     (BigDiff_FP8_E4M3[1] ? 6'b0 : Lv1_Res[1]),
                     (BigDiff_FP8_E4M3[0] ? 6'b0 : Lv1_Res[0])};
-            OUT_GRS[0] = BigDiff_FP8_E4M3[0] && DIFF[ 3] ? 3'b001 : Lv1_GRS[0];
-            OUT_GRS[1] = BigDiff_FP8_E4M3[1] && DIFF[ 8] ? 3'b001 : Lv1_GRS[1];
-            OUT_GRS[2] = BigDiff_FP8_E4M3[2] && DIFF[13] ? 3'b001 : Lv1_GRS[2];
-            OUT_GRS[3] = BigDiff_FP8_E4M3[3] && DIFF[18] ? 3'b001 : Lv1_GRS[3];
+            OUT_GRS[0] = BigDiff_FP8_E4M3[0] ? (DIFF[ 3] ? 3'b001 : {Lv1_Res[0][0], Lv1_GRS[0][3,2], |Lv1_GRS[0][1:0]}) : Lv1_GRS[0];
+            OUT_GRS[1] = BigDiff_FP8_E4M3[1] ? (DIFF[ 8] ? 3'b001 : {Lv1_Res[1][0], Lv1_GRS[1][3,2], |Lv1_GRS[1][1:0]}) : Lv1_GRS[1];
+            OUT_GRS[2] = BigDiff_FP8_E4M3[2] ? (DIFF[13] ? 3'b001 : {Lv1_Res[2][0], Lv1_GRS[2][3,2], |Lv1_GRS[2][1:0]}) : Lv1_GRS[2];
+            OUT_GRS[3] = BigDiff_FP8_E4M3[3] ? (DIFF[18] ? 3'b001 : {Lv1_Res[3][0], Lv1_GRS[3][3,2], |Lv1_GRS[3][1:0]}) : Lv1_GRS[3];
         end
         `CONFIG_FP8_E5M2: begin
             OUT = { (BigDiff_FP8_E5M2[3] ? 6'b0 : Lv1_Res[3]),

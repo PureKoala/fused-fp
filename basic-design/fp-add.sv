@@ -39,7 +39,7 @@ logic [MAN_WIDTH+3:0] Shifted_Small;
 Shifter shifter(.IN(Smaller_MAN), .DIFF(EXP_DIFF), .OUT(Shifted_Small));
 
 wire [MAN_WIDTH+4:0] Far_Res_Pre = (IN1_SIG ^ IN2_SIG 
-                                        ? ({1'b1, ~Shifted_Small[MAN_WIDTH+3:3], Shifted_Small[2:0]} + 4'b1000) 
+                                        ? ({1'b1, ~Shifted_Small} + 1'b1) 
                                         : {1'b0, Shifted_Small}) 
                                     + {1'b0, Larger_MAN, 3'b0};
 

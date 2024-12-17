@@ -2,7 +2,7 @@
 
 `define CONFIG_FP64 4'b0001
 `define CONFIG_FP32 4'b0010
-`define CONFIG_TF32 4'b0011
+// `define CONFIG_TF32 4'b0011
 `define CONFIG_FP16 4'b0100
 `define CONFIG_BF16 4'b0101
 `define CONFIG_FP8_E4M3 4'b0110
@@ -22,9 +22,9 @@
 `define FP32_EXP_WIDTH 8
 `define FP32_MAN_WIDTH 23
 
-`define TF32_WIDTH 32
-`define TF32_EXP_WIDTH 8
-`define TF32_MAN_WIDTH 10
+// `define TF32_WIDTH 32
+// `define TF32_EXP_WIDTH 8
+// `define TF32_MAN_WIDTH 10
 
 `define FP16_WIDTH 16
 `define FP16_EXP_WIDTH 5
